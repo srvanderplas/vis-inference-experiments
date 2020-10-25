@@ -20,6 +20,8 @@ Describe any simulations conducted to determine parameter choices - put
 code/writeup into other/simulation folder - Emily, I haven’t done this
 yet, would you mind?
 
+Emily: testing this out
+
 ### Geoms
 
 All plots in this experiment are scatterplots.

@@ -1,6 +1,14 @@
 ---
 title: "Pilot: Log Scales"
 author: Emily Robinson, Reka Howard, Susan Vanderplas
+header-includes: |
+  \usepackage{hyperref}
+  \usepackage[utf8]{inputenc}
+  \def\tightlist{}
+  \usepackage[usenames,dvipsnames]{color}
+  \newcommand{\er}[1]{\textcolor{Orange}{#1}}
+  \newcommand{\svp}[1]{\textcolor{Green}{#1}}
+  \newcommand{\rh}[1]{\textcolor{Plum}{#1}}
 output: github_document
 ---
 
@@ -22,6 +30,8 @@ Lineup Type(s): Rorschach, One-target
 
 #### Simulations conducted
 Describe any simulations conducted to determine parameter choices - put code/writeup into other/simulation folder - Emily, I haven't done this yet, would you mind?
+
+Emily: testing this out
 
 ### Geoms
 
