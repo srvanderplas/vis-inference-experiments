@@ -1,0 +1,75 @@
+# Contents
+- 20200917-graphics_group
+  - Last modified: 2020-09-23 16:09:31
+    - Tables
+      - experiment_details
+        - experiment:
+        - question:
+        - reasons:
+        - lpp:
+        - trials_req:
+      - feedback
+        - ip_address (hashed for privacy):
+        - nick_name (hashed for privacy):
+        - start_time:
+        - end_time:
+        - pic_id:
+        - response_no:
+        - conf_level:
+        - choice_reason:
+        - description:
+      - picture_details
+        - pic_id:
+        - sample_size:
+        - test_param:
+        - param_value:
+        - p_value:
+        - obs_plot_location:
+        - pic_name:
+        - experiment:
+        - difficulty:
+        - data_name:
+        - trial:
+      - users
+        - nick_name (hashed for privacy):
+        - age:
+        - gender:
+        - academic_study:
+        - ip_address (hashed for privacy):
+- exp_data
+  - Last modified: 2020-10-18 14:31:09
+    - Tables
+      - experiment_details
+        - experiment:
+        - question:
+        - reasons:
+        - lpp:
+        - trials_req:
+      - feedback
+        - ip_address (hashed for privacy):
+        - nick_name (hashed for privacy):
+        - start_time:
+        - end_time:
+        - pic_id:
+        - response_no:
+        - conf_level:
+        - choice_reason:
+        - description:
+      - picture_details
+        - pic_id:
+        - sample_size:
+        - test_param:
+        - param_value:
+        - p_value:
+        - obs_plot_location:
+        - pic_name:
+        - experiment:
+        - difficulty:
+        - data_name:
+        - trial:
+      - users
+        - nick_name (hashed for privacy):
+        - age:
+        - gender:
+        - academic_study:
+        - ip_address (hashed for privacy):
