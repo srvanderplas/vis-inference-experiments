@@ -4,6 +4,7 @@ A repository for holding the code and data necessary to run visual inference exp
 
 Structure:
 
+```
 experiment-name
   | 
   | - README description of the experiment and experimental design with at least one sample lineup. 
@@ -20,3 +21,4 @@ experiment-name
   | + data - subfolder for anonymized participant data
   |
   | + other folders as necessary
+```
