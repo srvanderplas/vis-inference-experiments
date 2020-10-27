@@ -23,12 +23,19 @@ See `app/code/lineup_generation.R`.
 #### Model
 
 Three parameter exponential with a multiplicative error.
-
-\[y_i = \alpha e^{\beta x_i + \epsilon_i} + \theta \]
+\[y_i = \alpha e^{\beta x_i + \epsilon_i} + \theta\]
 
 #### Heuristic Simulation Approach
 
+  - `coefEst(xMid, xRange, yRange)`
+
+  - `expSim(alphahat, betahat, thetahat, sigma, nReps, N, xRange,
+    yRange)`
+
+<!-- end list -->
+
 1.  Set 4 points (Min, Max, Midpoint - 2 of these for convergence)
+
 2.  Select starting values
 
 <!-- end list -->
@@ -40,8 +47,10 @@ Three parameter exponential with a multiplicative error.
 
 <!-- end list -->
 
-3.  Using `nls()`, fit selected model to the points and obtain parameter
-    estimates. \[y_i = \hat\alpha e^{\hat\beta x_i} + \hat\theta\]
+3.  Using `nls()` from `library(lme4)`, fit selected model to the points
+    and obtain parameter estimates.
+    \[y_i = \hat\alpha e^{\hat\beta x_i} + \hat\theta\]
+
 4.  Using the parameter estimates, assume
     \(\epsilon_i \sim N(0, \sigma^2)\) and set
     \(\tilde \alpha = \frac{\hat\alpha}{e^{\sigma^2/2}}\). Simulate data
@@ -50,15 +59,28 @@ Three parameter exponential with a multiplicative error.
 
 #### Simulations conducted
 
-The **Lack of Fit** test statistic calculated by the deviation of the
-data from a linear regression line was used to determine the curvature
-and variability combination values.
+The features we selected to manipulated are:
 
 **Curvature** - Controled by the `Midpoint` in the heuristic simulation
-and in turn affects \(\hat\beta.\) - Easy / Medium / Hard
+and in turn affects \(\hat\beta.\) - Easy (clear elbow) / Medium / Hard
+(almost a straight line)
 
 **Variability** - Controled by the standard deviation, \(\sigma\), of
 the errors. - Low / High
+
+The **Lack of Fit** test statistic calculated by the deviation of the
+data from a linear regression line - `calcLOF(sim.data)` - was used to
+determine the curvature and variability combination values with 10
+replications per x value.
+
+See `app/code/parameter_selection.html` for comparisons of the density
+curves of the lack of fit test statistics calculated from 1000 dataset
+simulations per curvature x parameter combination.
+
+#### Final Parameter Selection
+
+The final simulation was conducted over a domain from x = (0,20), a
+range from y = (10,100) with a sample size of N = 50.
 
 <table>
 
@@ -394,78 +416,6 @@ High
 
 </table>
 
-<table>
-
-<tbody>
-
-<tr>
-
-<td style="text-align:left;">
-
-Domain
-
-</td>
-
-<td style="text-align:right;">
-
-0
-
-</td>
-
-<td style="text-align:right;">
-
-20
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-Range
-
-</td>
-
-<td style="text-align:right;">
-
-10
-
-</td>
-
-<td style="text-align:right;">
-
-100
-
-</td>
-
-</tr>
-
-<tr>
-
-<td style="text-align:left;">
-
-N
-
-</td>
-
-<td style="text-align:right;">
-
-50
-
-</td>
-
-<td style="text-align:right;">
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
 ### Geoms
 
 All plots in this experiment are scatterplots.
@@ -512,10 +462,6 @@ rorschach lineups
 ## Data Files
 
 Data file and field descriptions can be found in `data/data-manifest.md`
-
-Emily, the columns need descriptions in data-manifest.md, but everything
-should be well structured at least :). You should be able to copy paste
-once you set things up
 
 ## Results:
 
