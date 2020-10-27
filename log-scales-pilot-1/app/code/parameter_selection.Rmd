@@ -1,0 +1,167 @@
+---
+title: "Parameter Selection"
+author: "Emily Robinson"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include = F, echo = T, message = F, warning = F}
+knitr::opts_chunk$set(echo = T, out.width = "100%", dpi = 300, message = F, warning = F)
+library(knitr)
+require(tidyverse)
+require(gridExtra)
+require(scales)
+library(purrr)
+```
+
+
+## Data Generation Method
+Data is simulated heuristically for the exponential with a multiplicative error with the following model: 
+
+$$y_i = \tilde\alpha e^{(\hat\beta x_i + \epsilon_i)}$$ 
+with $\epsilon \sim N(0,\sigma^2)$ and $\tilde\alpha = \frac{\hat\alpha}{e^{\sigma^2/2}}$
+
+where $\hat\alpha,$ and $\hat\beta$ were estimated using `nls().` With $x\in (0,20), y \in (10,100)$ and $N = 20.$
+
+## Lack of Fit Simulation
+
+```{r functions, message=FALSE, warning=FALSE, echo = F}
+
+library(tidyverse)
+library(nullabor)
+library(gridExtra)
+library(scales)
+
+
+seed_num = 68505
+
+xMid_vals  <- c(14.5, 13, 11.5)
+sigma_vals <- c(0.25, 0.37, 0.12, 0.18, 0.05, 0.07)
+
+yRange_vals = c(10,100)
+
+# Obtain alphahat, betahat, and thetahat for different midpoints.
+coefEst <- function(xMid, xRange = c(0,20), yRange = yRange_vals){
+  
+  # This creates the line y = -x (scaled to fit the x and y ranges)
+  # |*            0
+  # |  *
+  # |    *
+  # |      *
+  # |        1
+  # |          2
+  # |0___________3
+  #
+  # where 1, 2, 3 represent different points used to determine the line curvature
+  
+  lineData   <- tibble(xLine = seq(xRange[1],xRange[2],0.1),
+                       yLine = -(abs(diff(yRange))/abs(diff(xRange)))*(xLine-xRange[1])+yRange[2])
+  pointsData <- tibble(xPoint = c(xRange[1], (xMid-0.1), (xMid+0.1), xRange[2]),
+                       yPoint = c(yRange[1], lineData$yLine[lineData$xLine == xMid], lineData$yLine[lineData$xLine == xMid], yRange[2]))
+  
+  # Connecting the 0 points in the illustration above with the 3rd point that
+  # determines curvature gives us a set of 3 points to use to fit an exponential
+  # line to the data.
+  
+  # We fit a linear regression to the log-transformed data to get starting values
+  lm.fit <- lm(log(yPoint) ~ xPoint, data = pointsData)
+  
+  alpha.0  <- exp(coef(lm.fit)[1]) %>% as.numeric()
+  beta.0   <- coef(lm.fit)[2] %>% as.numeric()
+  theta.0 <- min(pointsData$yPoint) * 0.5  # Why 0.5?
+  
+  # and then use NLS to fit a better line to the data
+  start <- list(alpha = alpha.0, beta = beta.0, theta = theta.0)
+  nonlinear.fit   <- nls(yPoint ~ alpha * exp(beta * xPoint) + theta ,
+                         data = pointsData, start = start)
+  
+  coefficients <- tibble(alphahat = (coef(nonlinear.fit)[1] %>% as.numeric()),
+                         betahat  = coef(nonlinear.fit)[2] %>% as.numeric(),
+                         thetahat = coef(nonlinear.fit)[3] %>% as.numeric())
+  
+  return(coefficients)
+}
+
+expSim <- function(alphahat, betahat, thetahat, sigma, nReps = 1, N = 50, xRange = c(0,20), yRange = yRange_vals){
+  
+  alpha = alphahat/(exp(sigma^2/2))
+  beta  = betahat
+  theta = thetahat
+  
+  vals <- seq(xRange[1], xRange[2], length.out = N*3/4)
+  xvals <- sample(vals, N, replace = T)
+  xvals <- jitter(xvals)
+  # xvals <- seq(xRange[1], xRange[2], length.out = N)
+  
+  expData <- tibble(x = rep(xvals, nReps),
+                    y = alpha*exp(beta*x + rnorm(N*nReps,0,sigma)) + theta)
+  return(expData)
+}
+
+# Evaluate Fit 
+calcLOF <- 
+  function(sim.data){
+    lof.mod <- lm(y ~ as.factor(x), data = sim.data)
+    lof <- anova(lof.mod) %>% 
+      broom::tidy() %>%
+      filter(term == "as.factor(x)") %>%
+      select(statistic)
+    return(lof)
+  }
+```
+
+```{r ExpMultParms, cache = F}
+
+coefData <- tibble(xMid = xMid_vals) %>%
+  mutate(coefficients = pmap(list(xMid),coefEst)) %>%
+  unnest(coefficients)
+
+#Identify parameters
+parmData <- tibble(Curvature   = c("Easy", "Easy", "Medium", "Medium", "Hard", "Hard"),
+                   Variability = c("Low", "High", "Low", "High", "Low", "High"),
+                   xMid        = c(rep(xMid_vals[1],2), rep(xMid_vals[2],2), rep(xMid_vals[3],2)),
+                   sigma       = sigma_vals) %>%
+  left_join(coefData, by = "xMid")
+
+parmData %>% kable(format = "pandoc", digits = 3)
+
+set.seed(seed_num)
+lofData <- parmData %>%
+  expand_grid(replicate = seq(1,1000,1)) %>%
+  mutate(data = pmap(list(alphahat,betahat,thetahat, sigma,nReps = 10),expSim)) %>%
+  mutate(lof = map(data, calcLOF)) %>%
+  unnest(lof)
+
+# Compare Varability within Curvature
+lofPlot_variability <- lofData %>%
+  mutate(Curvature = factor(Curvature, levels = c("Easy", "Medium", "Hard"))) %>%
+  mutate(Variability = factor(Variability, levels = c("Low", "High"))) %>%
+  ggplot(aes(x = statistic, fill = Variability, color = Variability)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_brewer(palette = "Paired") + 
+  scale_color_brewer(palette = "Paired") + 
+  facet_wrap(~Curvature, scale = "free") + 
+  ggtitle("Lack of Fit within Curvature Levels") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "bottom",
+        aspect.ratio = 1)
+lofPlot_variability
+
+# Compare Curvature within Varability
+lofPlot_curvature <- lofData %>%
+  mutate(Curvature = factor(Curvature, levels = c("Easy", "Medium", "Hard"))) %>%
+  mutate(Variability = factor(Variability, levels = c("Low", "High"))) %>%
+  ggplot(aes(x = statistic, fill = Curvature, color = Curvature)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_brewer(palette = "Paired") + 
+  scale_color_brewer(palette = "Paired") + 
+  facet_wrap(~Variability, scale = "free") + 
+  ggtitle("Lack of Fit within Variability Levels") +
+  theme_bw(base_size = 14) +
+  theme(legend.position = "bottom",
+        aspect.ratio = 1)
+lofPlot_curvature
+```
+
+
